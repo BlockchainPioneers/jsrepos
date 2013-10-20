@@ -144,7 +144,24 @@ function init() {
     groundTextureBump.wrapS = groundTextureBump.wrapT = THREE.RepeatWrapping;
     groundTextureBump.repeat.set(repeat, repeat);
     groundTextureBump.anisotropy = anisotropy;
-    
+    var brickMaterialArray = [];
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	var StaticCubeMat = new THREE.MeshFaceMaterial(brickMaterialArray);
+	var StaticCubeGeom = new THREE.CubeGeometry( 50, 50, 50, 1, 1, 1, brickMaterialArray );
+	var group = new THREE.Object3D();
+	var m = maze(10,10);
+	var posArray = getPositionArray(m);
+	for(var i = 0 ; i<posArray.x.length ; i++){
+		StaticCube = new THREE.Mesh( StaticCubeGeom, StaticCubeMat );
+		StaticCube.position.set(posArray.x[i], 25.1, posArray.y[i]);
+		group.add(StaticCube);
+	}
+	scene.add( group );
     var groundMaterial = new THREE.MeshPhongMaterial( { map: groundTexture,
                                                        bumpMap: groundTextureBump,
                                                        side: THREE.SingleSide });
