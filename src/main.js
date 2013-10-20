@@ -19,14 +19,14 @@ var textureAtlas = {};
 var textureLoader = new THREE.ImageLoader();
 // loadCount holds how many images have been loaded. maxLoadCount how many have to be loaded for everything to proceed
 var loadCount = 0;
-var maxLoadCount = 4;
+var maxLoadCount = 5;
 var hasInitHappened = false;
 
 // think about putting these elsewhere. Preliminary objects.
 var ground;
 var player;
 var playerSpotLight;
-var playerSpotLightPosition = new THREE.Vector3(-100, 200, 50);
+var playerSpotLightPosition = new THREE.Vector3(0, 220, 50);
 
 // parameters
 var cameraYDistance = 400;
@@ -85,7 +85,7 @@ function init() {
     var VIEW_ANGLE = 45;
     var ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT;
     var NEAR = 0.1;
-    var FAR = 20000;
+    var FAR = 2000;
     camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
     scene.add(camera);
     camera.position.set(0, cameraYDistance, 0); // later make it so initial look at is on player
@@ -118,20 +118,27 @@ function init() {
     
     // LIGHTS
     var light = new THREE.PointLight(0x333333);
-    light.position.set(0, 250, 10);
+    light.position.set(0, 210, 10);
     //scene.add(light);
     
     var ambientLight = new THREE.AmbientLight(0x111111);
     scene.add(ambientLight);
     
     playerSpotLight = new THREE.SpotLight(0xaaaaaa);
-    playerSpotLight.position.set(0, 200, 0);
+    playerSpotLight.position.set(0, 115, 0);
     playerSpotLight.shadowDarkness = 0.8;
     playerSpotLight.castShadow = true;
-    //spotLight.shadowCameraFov = 120;
+    playerSpotLight.shadowCameraFov = 90;
     //playerSpotLight.shadowMapWidth = 1024;
     //playerSpotLight.shadowMapHeight = 1024;
+    //playerSpotLight.onlyShadow = true;
+    playerSpotLight.shadowCameraVisible = true;
     scene.add(playerSpotLight);
+    
+    /*var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(0, 1, 0);
+    directionalLight.onlyShadow = true;
+    scene.add(directionalLight);*/
     
     // GROUND
     var repeat = 50;
@@ -145,24 +152,7 @@ function init() {
     groundTextureBump.wrapS = groundTextureBump.wrapT = THREE.RepeatWrapping;
     groundTextureBump.repeat.set(repeat, repeat);
     groundTextureBump.anisotropy = anisotropy;
-    var brickMaterialArray = [];
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
-	var StaticCubeMat = new THREE.MeshFaceMaterial(brickMaterialArray);
-	var StaticCubeGeom = new THREE.CubeGeometry( 50, 50, 50, 1, 1, 1, brickMaterialArray );
-	var group = new THREE.Object3D();
-	var m = maze(10,10);
-	var posArray = getPositionArray(m);
-	for(var i = 0 ; i<posArray.x.length ; i++){
-		StaticCube = new THREE.Mesh( StaticCubeGeom, StaticCubeMat );
-		StaticCube.position.set(posArray.x[i], 25.1, posArray.y[i]);
-		group.add(StaticCube);
-	}
-	scene.add( group );
+   
     var groundMaterial = new THREE.MeshPhongMaterial( { map: groundTexture,
                                                        bumpMap: groundTextureBump,
                                                        side: THREE.SingleSide });
@@ -174,6 +164,27 @@ function init() {
     scene.add(ground);
     targetList.push(ground); // used for picking
     ground.receiveShadow = true;
+    
+    // WALL    
+    var staticCubeMat = new THREE.MeshLambertMaterial( { map:textureAtlas["brick"] });
+    var staticCubeGeom = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
+    var group = staticCubeGeom;
+    var m = maze(10, 10);
+    var posArray = getPositionArray(m);
+    var lastPosition = new THREE.Vector3(0, 0, 0);
+    for (var i = 1; i < posArray.x.length; i++) {
+        staticCubeGeom = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
+        console.log(posArray.x[i] + ", " + posArray.y[i]);
+        for (var j = 0; j < staticCubeGeom.vertices.length; j++) {
+            staticCubeGeom.vertices[j].x -= posArray.x[i];
+            staticCubeGeom.vertices[j].z -= posArray.y[i];
+        }
+        THREE.GeometryUtils.merge(group, staticCubeGeom);
+    }
+    var mesh2 = new THREE.Mesh(group, staticCubeMat);
+    mesh2.castShadow = true;
+    mesh2.recieveShadow = true;
+    scene.add(mesh2);
     
     // PLAYER
     var sphereTexture = textureAtlas["water"];
@@ -244,10 +255,13 @@ function update() {
     }
     
     // SPOTLIGHT FOLLOW
-    playerSpotLight.position.set(
+    var relativeLightOffset = new THREE.Vector3(playerSpotLightPosition.x, playerSpotLightPosition.y, playerSpotLightPosition.z);
+    var lightOffset = relativeLightOffset.applyMatrix4(player.matrixWorld);
+    playerSpotLight.position.set(relativeLightOffset.x, relativeLightOffset.y, relativeLightOffset.z);
+    /*playerSpotLight.position.set(
                 player.position.x + playerSpotLightPosition.x, 
                 player.position.y + playerSpotLightPosition.y,
-                player.position.z + playerSpotLightPosition.z);
+                player.position.z + playerSpotLightPosition.z);*/
     
     // CAMERA FOLLOW
     var relativeCameraOffset = new THREE.Vector3(0, cameraYDistance, 0);
