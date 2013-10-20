@@ -19,14 +19,14 @@ var textureAtlas = {};
 var textureLoader = new THREE.ImageLoader();
 // loadCount holds how many images have been loaded. maxLoadCount how many have to be loaded for everything to proceed
 var loadCount = 0;
-var maxLoadCount = 5;
+var maxLoadCount = 4;
 var hasInitHappened = false;
 
 // think about putting these elsewhere. Preliminary objects.
 var ground;
 var player;
 var playerSpotLight;
-var playerSpotLightPosition = new THREE.Vector3(0, 120, 0);
+var playerSpotLightPosition = new THREE.Vector3(-100, 200, 50);
 
 // parameters
 var cameraYDistance = 400;
@@ -40,7 +40,7 @@ function load() {
     loadTexture("assets/Gravel512_SSBump.jpg", "gravel_bump");
     loadTexture("assets/Water512.jpg", "water");
     loadTexture("assets/Water512-gray_Normal.png", "water_normal");
-    loadTexture("assets/brick.png", "brick");
+	loadTexture("assets/brick.png", "brick");
 }
 
 // Eventually place these into a separate loading file
@@ -125,37 +125,13 @@ function init() {
     scene.add(ambientLight);
     
     playerSpotLight = new THREE.SpotLight(0xaaaaaa);
-    playerSpotLight.position.set(0, 100, 0);
+    playerSpotLight.position.set(0, 200, 0);
     playerSpotLight.shadowDarkness = 0.8;
     playerSpotLight.castShadow = true;
-    playerSpotLight.shadowCameraFov = 90;
+    //spotLight.shadowCameraFov = 120;
     //playerSpotLight.shadowMapWidth = 1024;
     //playerSpotLight.shadowMapHeight = 1024;
     scene.add(playerSpotLight);
-    
-    // WALL
-    var brickMaterialArray = [];
-	brickMaterialArray.push(new THREE.MeshLambertMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshLambertMaterial( { map: textureAtlas["brick"] }));
-	brickMaterialArray.push(new THREE.MeshLambertMaterial( { map: textureAtlas["brick"] }));
-    brickMaterialArray.push(new THREE.MeshLambertMaterial( { map: textureAtlas["brick"] }));
-    brickMaterialArray.push(new THREE.MeshLambertMaterial( { map: textureAtlas["brick"] }));
-    brickMaterialArray.push(new THREE.MeshLambertMaterial( { map: textureAtlas["brick"] }));
-	var StaticCubeMat = new THREE.MeshFaceMaterial(brickMaterialArray);
-	var StaticCubeGeom = new THREE.CubeGeometry( 50, 150, 50, 1, 1, 1, brickMaterialArray );
-	var group = new THREE.Object3D();
-	var m = maze(10,10);
-	var posArray = getPositionArray(m);
-	for(var i = 0 ; i<posArray.x.length ; i++){
-		StaticCube = new THREE.Mesh( StaticCubeGeom, StaticCubeMat );
-		StaticCube.position.set(posArray.x[i], 50, posArray.y[i]);
-        StaticCube.castShadow = true;
-        StaticCube.receiveShadow = true;
-        group.add(StaticCube);
-	}
-	scene.add( group );
-   
-    
     
     // GROUND
     var repeat = 50;
@@ -169,7 +145,24 @@ function init() {
     groundTextureBump.wrapS = groundTextureBump.wrapT = THREE.RepeatWrapping;
     groundTextureBump.repeat.set(repeat, repeat);
     groundTextureBump.anisotropy = anisotropy;
-    
+    var brickMaterialArray = [];
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	var StaticCubeMat = new THREE.MeshFaceMaterial(brickMaterialArray);
+	var StaticCubeGeom = new THREE.CubeGeometry( 50, 50, 50, 1, 1, 1, brickMaterialArray );
+	var group = new THREE.Object3D();
+	var m = maze(10,10);
+	var posArray = getPositionArray(m);
+	for(var i = 0 ; i<posArray.x.length ; i++){
+		StaticCube = new THREE.Mesh( StaticCubeGeom, StaticCubeMat );
+		StaticCube.position.set(posArray.x[i], 25.1, posArray.y[i]);
+		group.add(StaticCube);
+	}
+	scene.add( group );
     var groundMaterial = new THREE.MeshPhongMaterial( { map: groundTexture,
                                                        bumpMap: groundTextureBump,
                                                        side: THREE.SingleSide });
