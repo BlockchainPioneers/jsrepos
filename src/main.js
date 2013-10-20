@@ -128,8 +128,8 @@ function init() {
     playerSpotLight.shadowDarkness = 0.8;
     playerSpotLight.castShadow = true;
     //spotLight.shadowCameraFov = 120;
-    playerSpotLight.shadowMapWidth = 1024;
-    playerSpotLight.shadowMapHeight = 1024;
+    //playerSpotLight.shadowMapWidth = 1024;
+    //playerSpotLight.shadowMapHeight = 1024;
     scene.add(playerSpotLight);
     
     // GROUND
@@ -145,7 +145,9 @@ function init() {
     groundTextureBump.repeat.set(repeat, repeat);
     groundTextureBump.anisotropy = anisotropy;
     
-    var groundMaterial = new THREE.MeshPhongMaterial( { map: groundTexture, bumpMap: groundTextureBump, side: THREE.SingleSide });
+    var groundMaterial = new THREE.MeshPhongMaterial( { map: groundTexture,
+                                                       bumpMap: groundTextureBump,
+                                                       side: THREE.SingleSide });
     var groundGeometry = new THREE.PlaneGeometry(10000, 10000, 1, 1);
     ground = new THREE.Mesh(groundGeometry, groundMaterial);
     
@@ -161,8 +163,10 @@ function init() {
     var sphereTextureNormal = textureAtlas["water_normal"];
     sphereTextureNormal.anisotropy = 16;
     
-    var sphereGeometry = new THREE.SphereGeometry(50, 64, 64);
-    var sphereMaterial = new THREE.MeshPhongMaterial( { map: sphereTexture, normalMap: sphereTextureNormal, side: THREE.DoubleSide });
+    var sphereGeometry = new THREE.SphereGeometry(25, 64, 64);
+    var sphereMaterial = new THREE.MeshPhongMaterial( { map: sphereTexture,
+                                                       normalMap: sphereTextureNormal,
+                                                       side: THREE.DoubleSide });
     player = new THREE.Mesh(sphereGeometry, sphereMaterial);
     
     player.position.set(100, 50, -50);
