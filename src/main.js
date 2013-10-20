@@ -40,6 +40,7 @@ function load() {
     loadTexture("assets/Gravel512_SSBump.jpg", "gravel_bump");
     loadTexture("assets/Water512.jpg", "water");
     loadTexture("assets/Water512-gray_Normal.png", "water_normal");
+	loadTexture("assets/brick.png", "brick");
 }
 
 // Eventually place these into a separate loading file
@@ -145,12 +146,12 @@ function init() {
     groundTextureBump.repeat.set(repeat, repeat);
     groundTextureBump.anisotropy = anisotropy;
     var brickMaterialArray = [];
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
-	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'assets/brick.png' ) }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
+	brickMaterialArray.push(new THREE.MeshBasicMaterial( { map: textureAtlas["brick"] }));
 	var StaticCubeMat = new THREE.MeshFaceMaterial(brickMaterialArray);
 	var StaticCubeGeom = new THREE.CubeGeometry( 50, 50, 50, 1, 1, 1, brickMaterialArray );
 	var group = new THREE.Object3D();
