@@ -1,5 +1,5 @@
 /**
-
+ * This generates the maze.
  */
  
 function maze(x,y) {
@@ -49,8 +49,8 @@ function getPositionArray(m){
 					//var StaticCube = new THREE.Mesh( MovingCubeGeom, StaticCubeMat );
 					//StaticCube.position.set(-475+Math.floor(j/2)*100, 25.1, 475 - Math.floor(k/4)*100);
 					//group.add(StaticCube);
-					x.push(-475 + Math.floor(j/2)*200);
-					y.push(475 - Math.floor(k/4)*200);
+					x.push(-950 + Math.floor(j/2)*200);
+					y.push(950 - Math.floor(k/4)*200);
 					}
 				else{
 					if (j>0 && m.verti[j/2-1][Math.floor(k/4)]){
@@ -60,8 +60,8 @@ function getPositionArray(m){
 						//var StaticCube = new THREE.Mesh( MovingCubeGeom, StaticCubeMat );
 						//StaticCube.position.set(-475+Math.floor(j/2)*100, 25.1, 475 - Math.floor(k/2)*50);
 						//group.add(StaticCube);
-						x.push(-475+Math.floor(j/2)*200);
-						y.push(475 - Math.floor(k/2)*100);
+						x.push(-950+Math.floor(j/2)*200);
+						y.push(950 - Math.floor(k/2)*100);
 						}
 					}
 				}
@@ -76,8 +76,8 @@ function getPositionArray(m){
 						//var StaticCube = new THREE.Mesh( MovingCubeGeom, StaticCubeMat );
 						//StaticCube.position.set(-475+j*50, 25.1, 475 - Math.floor(k/4)*100);
 						//group.add(StaticCube);
-						x.push(-475+j*100);
-						y.push(475 - Math.floor(k/4)*200);
+						x.push(-950+j*100);
+						y.push(950 - Math.floor(k/4)*200);
 					}
 				}
 			}

@@ -13,13 +13,21 @@ var projector, mouse = { x: 0, y:0 };
 var targetList = [];
 var mouseLeftButtonDown;
 
+// Particles
+var particleGroup;
+var particleAttributes;
+
+// collision list - eventually some spatial data structure.
+var collidables = [];
+
 // loading textures (possibly other things)
 // You access textureAtlas by doing textureAtlas[name]. e.g. textureAtlas['gravel']
 var textureAtlas = {};
 var textureLoader = new THREE.ImageLoader();
-// loadCount holds how many images have been loaded. maxLoadCount how many have to be loaded for everything to proceed
+// loadCount holds how many images have been loaded.
+// maxLoadCount how many have to be loaded for everything to proceed
 var loadCount = 0;
-var maxLoadCount = 5;
+var maxLoadCount = 6;
 var hasInitHappened = false;
 
 // think about putting these elsewhere. Preliminary objects.
@@ -27,12 +35,15 @@ var ground;
 var player;
 var playerSpotLight;
 var playerSpotLightPosition = new THREE.Vector3(0, 220, 50);
+var light;
 
 // parameters
 var cameraYDistance = 400;
 var anisotropy = 2;
 
-load(); // This starts everything. Game doesn't start until maxLoadCount amount of assets have been loaded.
+// This starts everything. Game doesn't start until 
+// maxLoadCount amount of assets have been loaded.
+load(); 
 
 // Enter images you wish to be loaded here using loadTexture(url, name);
 function load() {
@@ -41,6 +52,7 @@ function load() {
     loadTexture("assets/Water512.jpg", "water");
     loadTexture("assets/Water512-gray_Normal.png", "water_normal");
 	loadTexture("assets/brick.png", "brick");
+    loadTexture("assets/spark.png", "particle");
 }
 
 // Eventually place these into a separate loading file
@@ -60,7 +72,8 @@ function loadTexture(url, name) {
 }
 
 function begin(event) {
-    if (loadCount == maxLoadCount) { // Can possibly cause an issue if loading happens in an odd manner
+    // Can possibly cause an issue if loading happens in an odd manner
+    if (loadCount == maxLoadCount) { 
         hasInitHappened = true;
         init();
         animate();
@@ -80,7 +93,8 @@ function init() {
     scene = new THREE.Scene();
     
     // CAMERA
-    var SCREEN_WIDTH = window.innerWidth - 5; // -5 to try to get rid of scrollbars
+    // -5 to try to get rid of scrollbars initially
+    var SCREEN_WIDTH = window.innerWidth - 5; 
     var SCREEN_HEIGHT = window.innerHeight - 5;
     var VIEW_ANGLE = 45;
     var ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT;
@@ -88,14 +102,16 @@ function init() {
     var FAR = 2000;
     camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
     scene.add(camera);
-    camera.position.set(0, cameraYDistance, 0); // later make it so initial look at is on player
+    // later make it so initial look at is on player
+    camera.position.set(0, cameraYDistance, 0); 
     camera.lookAt(scene.position);
     
     // RENDERER
     if (Detector.webgl) {
         renderer = new THREE.WebGLRenderer( { antialias: true } );
     } else {
-        renderer = new THREE.CanvasRenderer(); // At some point might want to try whether this actually works.
+        // At some point might want to try whether this actually works.
+        renderer = new THREE.CanvasRenderer();
     }
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     renderer.shadowMapEnabled = true;
@@ -117,28 +133,28 @@ function init() {
     container.appendChild(stats.domElement);
     
     // LIGHTS
-    var light = new THREE.PointLight(0x333333);
-    light.position.set(0, 210, 10);
+    light = new THREE.PointLight(0x333333);
+    light.position.set(0, 410, 0);
     //scene.add(light);
     
-    var ambientLight = new THREE.AmbientLight(0x111111);
+    var ambientLight = new THREE.AmbientLight(0x050505);
     scene.add(ambientLight);
     
     playerSpotLight = new THREE.SpotLight(0xaaaaaa);
     playerSpotLight.position.set(0, 115, 0);
     playerSpotLight.shadowDarkness = 0.8;
     playerSpotLight.castShadow = true;
-    playerSpotLight.shadowCameraFov = 90;
+    playerSpotLight.shadowCameraFov = 120;
     //playerSpotLight.shadowMapWidth = 1024;
     //playerSpotLight.shadowMapHeight = 1024;
     //playerSpotLight.onlyShadow = true;
-    playerSpotLight.shadowCameraVisible = true;
+    //playerSpotLight.shadowCameraVisible = true;
     scene.add(playerSpotLight);
     
-    /*var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 1, 0);
+    var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(0, 100, 0);
     directionalLight.onlyShadow = true;
-    scene.add(directionalLight);*/
+    scene.add(directionalLight);
     
     // GROUND
     var repeat = 50;
@@ -155,57 +171,78 @@ function init() {
    
     var groundMaterial = new THREE.MeshPhongMaterial( { map: groundTexture,
                                                        bumpMap: groundTextureBump,
-                                                       side: THREE.SingleSide });
+                                                       side: THREE.DoubleSide });
     var groundGeometry = new THREE.PlaneGeometry(10000, 10000, 1, 1);
     ground = new THREE.Mesh(groundGeometry, groundMaterial);
     
     ground.position.y = -0.5;
-    ground.rotation.x = -Math.PI / 2;
+    ground.rotation.x = Math.PI / 2;
     scene.add(ground);
     targetList.push(ground); // used for picking
     ground.receiveShadow = true;
     
-    // WALL    
+    // WALL - merge geometry!
     var staticCubeMat = new THREE.MeshLambertMaterial( { map:textureAtlas["brick"] });
-    var staticCubeGeom = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
-    var group = staticCubeGeom;
-    var m = maze(10, 10);
+    var group = new THREE.CubeGeometry();
+    var m = maze(5, 5);
     var posArray = getPositionArray(m);
     var lastPosition = new THREE.Vector3(0, 0, 0);
     for (var i = 1; i < posArray.x.length; i++) {
-        staticCubeGeom = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
-        console.log(posArray.x[i] + ", " + posArray.y[i]);
+        var staticCubeGeom = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
         for (var j = 0; j < staticCubeGeom.vertices.length; j++) {
             staticCubeGeom.vertices[j].x -= posArray.x[i];
             staticCubeGeom.vertices[j].z -= posArray.y[i];
         }
         THREE.GeometryUtils.merge(group, staticCubeGeom);
+        group.mergeVertices();
+        group.computeFaceNormals();
+        group.computeVertexNormals();
     }
+    
     var mesh2 = new THREE.Mesh(group, staticCubeMat);
     mesh2.castShadow = true;
     mesh2.recieveShadow = true;
     scene.add(mesh2);
+    collidables.push(mesh2);
+    
+    var cubeGeo = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
+    var cube = new THREE.Mesh(cubeGeo, staticCubeMat);
+    cube.position.set(70, 75, 480);
+    scene.add(cube);
+    collidables.push(cube);
     
     // PLAYER
-    var sphereTexture = textureAtlas["water"];
-    sphereTexture.anisotropy = 16;
-    var sphereTextureNormal = textureAtlas["water_normal"];
-    sphereTextureNormal.anisotropy = 16;
-    
-    var sphereGeometry = new THREE.SphereGeometry(25, 64, 64);
-    var sphereMaterial = new THREE.MeshPhongMaterial( { map: sphereTexture,
-                                                       normalMap: sphereTextureNormal,
-                                                       side: THREE.DoubleSide });
-    player = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    
-    player.position.set(100, 50, -50);
-    scene.add(player);
-    
-    player.castShadow = true;
-    playerSpotLight.target = player;
+    console.log(97, 50, -43);
+    player = new Player(97, 50, -43, 100, 200);
+    playerSpotLight.target = player.model;
     
     // MOUSE PICKING projector
     projector = new THREE.Projector();
+    
+    // PARTICLES
+    particleGroup = new THREE.Object3D();
+    particleAttributes = { startSize: [], startPosition: [], randomness: [] };
+    
+    var totalParticles = 200;
+    var radiusRange = 50;
+    for (var k = 0; k < totalParticles; k++) {
+        var spriteMaterial = new THREE.SpriteMaterial( { map: textureAtlas["particle"], 
+                                                       useScreenCoordinates: false,
+                                                       color: 0xffffff});
+        var sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(32, 32, 1.0);
+        sprite.position.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+        sprite.position.setLength(radiusRange * (Math.random() * 0.1 + 0.9));
+        sprite.material.color.setHSL(Math.random(), 0.9, 0.7);
+        
+        sprite.material.blending = THREE.AdditiveBlending;
+        
+        particleGroup.add(sprite);
+        particleAttributes.startPosition.push(sprite.position.clone());
+        particleAttributes.randomness.push(Math.random());                                              
+    }
+    particleGroup.position.set(258, 50, 252);
+    scene.add(particleGroup);
     
     // EVENT LISTENERS
     document.addEventListener("mousedown", onMouseDown, false);
@@ -225,50 +262,40 @@ function animate() {
 // MAIN UPDATE LOOP
 function update() {
     var delta = clock.getDelta(); // seconds
-    var moveDistance = 200 * delta;
     
-    if (keyboard.pressed("A")) {
-        console.log("a");
-    }
-    
-    if (mouseLeftButtonDown) {
-        var vector = new THREE.Vector3(mouse.x, mouse.y, 1);
-        projector.unprojectVector(vector, camera);
-        var ray = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
-        
-        var intersects = ray.intersectObjects(targetList);
-        
-        // MOVEMENT
-        if (intersects.length > 0) {
-            var dmouseX = intersects[0].point.x - player.position.x;
-            var dmouseZ = intersects[0].point.z - player.position.z;
-            var rotAngle = Math.atan2(dmouseZ, dmouseX);
-            
-            // this is some massive clusterf-
-            player.rotation.y = Math.atan2(dmouseX, dmouseZ) + Math.PI;
-            
-            player.position.x += moveDistance * Math.cos(rotAngle);
-            player.position.z += moveDistance * Math.sin(rotAngle);
-            
-            
-        }
-    }
+    // PLAYER UPDATE
+    player.update(delta);
     
     // SPOTLIGHT FOLLOW
-    var relativeLightOffset = new THREE.Vector3(playerSpotLightPosition.x, playerSpotLightPosition.y, playerSpotLightPosition.z);
-    var lightOffset = relativeLightOffset.applyMatrix4(player.matrixWorld);
-    playerSpotLight.position.set(relativeLightOffset.x, relativeLightOffset.y, relativeLightOffset.z);
-    /*playerSpotLight.position.set(
-                player.position.x + playerSpotLightPosition.x, 
-                player.position.y + playerSpotLightPosition.y,
-                player.position.z + playerSpotLightPosition.z);*/
+    var relativeLightOffset = new THREE.Vector3(playerSpotLightPosition.x,
+                                                playerSpotLightPosition.y,
+                                                playerSpotLightPosition.z);
+    var lightOffset = relativeLightOffset.applyMatrix4(player.model.matrixWorld);
+    playerSpotLight.position.set(relativeLightOffset.x,
+                                 relativeLightOffset.y,
+                                 relativeLightOffset.z);
+    light.position.x = player.model.position.x;
+    light.position.z = player.model.position.z;
     
     // CAMERA FOLLOW
     var relativeCameraOffset = new THREE.Vector3(0, cameraYDistance, 0);
-    var cameraOffset = relativeCameraOffset.applyMatrix4(player.matrixWorld);
+    var cameraOffset = relativeCameraOffset.applyMatrix4(player.model.matrixWorld);
     
-    camera.position.set(cameraOffset.x, cameraYDistance, cameraOffset.z);
+    camera.position.set(cameraOffset.x,cameraYDistance, cameraOffset.z);
     
+    // PARTICLE UPDATE
+    var time = 4 * clock.getElapsedTime();
+    for (var c = 0; c < particleGroup.children.length; c++) {
+        var sprite = particleGroup.children[c];
+        var a = particleAttributes.randomness[c] + 1;
+		var pulseFactor = Math.sin(a * time) * 0.1 + 0.9;
+		sprite.position.x = particleAttributes.startPosition[c].x * pulseFactor;
+		sprite.position.y = particleAttributes.startPosition[c].y * pulseFactor;
+		sprite.position.z = particleAttributes.startPosition[c].z * pulseFactor;	
+    }
+    particleGroup.rotation.y = time * 0.75;
+    
+    // DISABLE CAMERA FOLLOW TO REALLY USE THIS
     if (keyboard.pressed("space")) {
         controls.update();
     }
@@ -280,7 +307,7 @@ function render() {
     renderer.render(scene, camera);
 }
 
-// ADDITIONAL FUNCTIONS. EVENTUALLY MOVE TO OTHER FILE
+// ADDITIONAL FUNCTIONS. EVENTUALLY MOVE TO OTHER FILES
 function sign(x) {
     if (x > 0) {
         return 1;
