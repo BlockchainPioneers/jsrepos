@@ -36,10 +36,11 @@ Player.prototype = {
             projector.unprojectVector(vector, camera);
             var ray = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
             
-            var intersects = ray.intersectObjects(targetList);
+            var intersects = ray.intersectObjects(targetList, true);
             
             // MOVEMENT
             if (intersects.length > 0) {
+                //console.log(intersects.length);
                 var dmouseX = intersects[0].point.x - player.model.position.x;
                 var dmouseZ = intersects[0].point.z - player.model.position.z;
                 var rotAngle = Math.atan2(dmouseZ, dmouseX);
@@ -58,20 +59,20 @@ Player.prototype = {
         
         // COLLISION
         //console.log(this.model.position);
-        /*var ray = new THREE.Raycaster(new THREE.Vector3(this.model.position.x,
+        var ray = new THREE.Raycaster(new THREE.Vector3(this.model.position.x,
                                                         this.model.position.y,
                                                         this.model.position.z), 
-                                      new THREE.Vector3(x, 0, z), 0, 200);
-        collisions = ray.intersectObjects(collidables, true);
+                                      new THREE.Vector3(x, 0, z), 0, 100);
+        collisionResults = ray.intersectObjects(collidables, true);
         //console.log(ray.ray.origin, this.model.position);
         //console.log(ray.ray.direction);
         
-        if (collisions.length > 0) {
-            console.log("collision! " + collisions.length);
-            console.log(ray.ray.origin, this.model.position);
-            console.log(ray.ray.direction, x, z);
-        }*/
-        var originPoint = this.model.position.clone();
+        if (collisionResults.length > 0 && collisionResults[0].distance < 50) {
+            console.log("collision! " + collisionResults.length);
+            /*console.log(ray.ray.origin, this.model.position);
+            console.log(ray.ray.direction, x, z);*/
+        }
+        /*var originPoint = this.model.position.clone();
         
         for (var vertexIndex = 0; vertexIndex < this.model.geometry.vertices.length; vertexIndex++) {
             var localVertex = this.model.geometry.vertices[vertexIndex].clone();
@@ -86,7 +87,7 @@ Player.prototype = {
                 z = -sign(directionVector.z) * 2;
                 console.log("collision!");
             }
-        }
+        }*/
         var futureX = this.model.position.x + x;
         var futureZ = this.model.position.z + z;
         

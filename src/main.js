@@ -135,9 +135,9 @@ function init() {
     // LIGHTS
     light = new THREE.PointLight(0x333333);
     light.position.set(0, 410, 0);
-    //scene.add(light);
+    scene.add(light);
     
-    var ambientLight = new THREE.AmbientLight(0x050505);
+    var ambientLight = new THREE.AmbientLight(0x090909);
     scene.add(ambientLight);
     
     playerSpotLight = new THREE.SpotLight(0xaaaaaa);
@@ -150,6 +150,8 @@ function init() {
     //playerSpotLight.onlyShadow = true;
     //playerSpotLight.shadowCameraVisible = true;
     scene.add(playerSpotLight);
+    
+    
     
     var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(0, 100, 0);
@@ -182,34 +184,40 @@ function init() {
     ground.receiveShadow = true;
     
     // WALL - merge geometry!
-    var staticCubeMat = new THREE.MeshLambertMaterial( { map:textureAtlas["brick"] });
-    var group = new THREE.CubeGeometry();
+    var staticCubeMat = new THREE.MeshBasicMaterial( { map:textureAtlas["brick"] });
     var m = maze(5, 5);
     var posArray = getPositionArray(m);
-    var lastPosition = new THREE.Vector3(0, 0, 0);
-    for (var i = 1; i < posArray.x.length; i++) {
+    var group = new THREE.CubeGeometry(0, 250, 0, 1, 1, 1);
+    /*for (var o = 0; o < group.vertices.length; o++) {
+        group.vertices[o].x -= posArray.x[i];
+        group.vertices[o].z -= posArray.y[i];
+    }*/
+    
+    for (var i = 0; i < posArray.x.length; i++) {
         var staticCubeGeom = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
-        for (var j = 0; j < staticCubeGeom.vertices.length; j++) {
+        var mesh2 = new THREE.Mesh(staticCubeGeom, staticCubeMat);
+        mesh2.position.set(posArray.x[i], 50, posArray.y[i]);
+        /*for (var j = 0; j < staticCubeGeom.vertices.length; j++) {
             staticCubeGeom.vertices[j].x -= posArray.x[i];
             staticCubeGeom.vertices[j].z -= posArray.y[i];
-        }
-        THREE.GeometryUtils.merge(group, staticCubeGeom);
-        group.mergeVertices();
-        group.computeFaceNormals();
-        group.computeVertexNormals();
-    }
+        }*/
+        //THREE.GeometryUtils.merge(group, staticCubeGeom);
+        
+        THREE.GeometryUtils.merge(group, mesh2);
+        
+    }   
     
-    var mesh2 = new THREE.Mesh(group, staticCubeMat);
-    mesh2.castShadow = true;
-    mesh2.recieveShadow = true;
-    scene.add(mesh2);
-    collidables.push(mesh2);
+    //THREE.GeometryUtils.triangulateQuads(group);
+    //group.computeBoundingSphere();
     
-    var cubeGeo = new THREE.CubeGeometry(100, 250, 100, 1, 1, 1);
-    var cube = new THREE.Mesh(cubeGeo, staticCubeMat);
-    cube.position.set(70, 75, 480);
-    scene.add(cube);
-    collidables.push(cube);
+    var mesh = new THREE.Mesh(group, staticCubeMat);
+    mesh.castShadow = true;
+    mesh.recieveShadow = true;
+    
+    mesh.position.y = 50;
+    scene.add(mesh);
+    targetList.push(mesh);
+    collidables.push(mesh);
     
     // PLAYER
     console.log(97, 50, -43);
@@ -243,6 +251,9 @@ function init() {
     }
     particleGroup.position.set(258, 50, 252);
     scene.add(particleGroup);
+    particleGroup.castShadow = true;
+    
+    scene.add(new THREE.FogExp2(0x333333, 0.01));
     
     // EVENT LISTENERS
     document.addEventListener("mousedown", onMouseDown, false);
@@ -294,6 +305,8 @@ function update() {
 		sprite.position.z = particleAttributes.startPosition[c].z * pulseFactor;	
     }
     particleGroup.rotation.y = time * 0.75;
+    particleGroup.position.x = player.model.position.x;
+    particleGroup.position.z = player.model.position.z;
     
     // DISABLE CAMERA FOLLOW TO REALLY USE THIS
     if (keyboard.pressed("space")) {
